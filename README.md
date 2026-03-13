@@ -1,5 +1,3 @@
-
-# RobertoMonforte.github.io
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -349,12 +347,13 @@
   .compare-table td {
     padding: 20px;
     vertical-align: top;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(139,26,26,0.3);
     font-size: 15px;
     line-height: 1.7;
-    color: rgba(245,237,224,0.72);
+    color: rgba(245,237,224,0.85);
+    background: rgba(80,10,10,0.6);
   }
-  .compare-table tr:hover td { background: rgba(201,168,76,0.03); }
+  .compare-table tr:hover td { background: rgba(110,15,15,0.75); }
   .compare-table td:first-child {
     font-family: 'Cinzel', serif;
     font-size: 9px;
