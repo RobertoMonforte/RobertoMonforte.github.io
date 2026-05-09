@@ -1,911 +1,1573 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crimen y Castigo — Reseña Interactiva</title>
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Network Masters: La Ruta de los Datos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=MedievalSharp&display=swap" rel="stylesheet">
 <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
   :root {
-    --ink: #1a0a05;
-    --parchment: #f5ede0;
-    --blood: #8b1a1a;
-    --gold: #c9a84c;
-    --shadow: #3d1c0e;
-    --muted: #7a5c4a;
-    --accent1: #c94040;
-    --accent2: #4090c9;
-    --cream: #faf3e8;
+    --fire: #D4690A;
+    --fire-bright: #F5A623;
+    --fire-dim: #8B3E05;
+    --gold: #C8A96E;
+    --gold-dim: #8B7040;
+    --ash: #C0B89A;
+    --ash-dim: #7A7060;
+    --stone: #1A1614;
+    --stone-dark: #0D0B0A;
+    --stone-mid: #2A2420;
+    --stone-light: #3A322C;
+    --soul-blue: #4A8FD4;
+    --soul-bright: #7FBFFF;
+    --blood: #8B1A1A;
+    --estus: #F5A623;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background-color: var(--ink);
-    color: var(--parchment);
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 18px;
-    line-height: 1.75;
-    overflow-x: hidden;
-  }
-
-  .hero {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 60px 40px;
-    background:
-      radial-gradient(ellipse at 50% 100%, rgba(139,26,26,0.35) 0%, transparent 70%),
-      linear-gradient(180deg, #0a0402 0%, #1a0a05 60%, #0f0302 100%);
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    font-family: 'IM Fell English', serif;
+    color: var(--ash);
     overflow: hidden;
   }
 
-  .hero::before {
+  /* ===== SLIDESHOW CONTAINER ===== */
+  #presentation {
+    width: 100vw; height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--stone-dark);
+    padding: 40px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .slide.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  /* Stone texture overlay */
+  .slide::before {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.03) 60px, rgba(201,168,76,0.03) 61px),
-      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.03) 60px, rgba(201,168,76,0.03) 61px);
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  /* Vignette */
+  .slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== TOP HUD ===== */
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+    z-index: 100;
     pointer-events: none;
   }
 
-  .hero-year {
+  #hud-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #slide-title-hud {
     font-family: 'Cinzel', serif;
     font-size: 11px;
-    letter-spacing: 6px;
-    color: var(--gold);
-    opacity: 0.7;
-    margin-bottom: 32px;
-    animation: fadeUp 1s ease 0.2s both;
-  }
-
-  .hero-title {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(42px, 8vw, 100px);
-    font-weight: 700;
-    line-height: 1.05;
-    background: linear-gradient(135deg, var(--gold) 0%, #e8c97a 40%, var(--gold) 70%, #a07830 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: fadeUp 1s ease 0.4s both;
-  }
-
-  .hero-amp {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    font-size: 0.55em;
-    display: block;
-    -webkit-text-fill-color: rgba(201,168,76,0.5);
-    letter-spacing: 2px;
-    margin: 8px 0;
-  }
-
-  .hero-author {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: clamp(16px, 2.5vw, 22px);
-    color: var(--muted);
     letter-spacing: 3px;
-    margin-top: 24px;
-    animation: fadeUp 1s ease 0.6s both;
+    text-transform: uppercase;
+    color: var(--ash-dim);
   }
 
-  .hero-divider {
-    width: 120px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 40px auto;
-    animation: fadeUp 1s ease 0.8s both;
-  }
-
-  .hero-tagline {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    font-size: clamp(15px, 2vw, 20px);
-    color: rgba(245,237,224,0.55);
-    max-width: 600px;
-    animation: fadeUp 1s ease 1s both;
-  }
-
-  .scroll-cta {
-    position: absolute;
-    bottom: 36px;
-    left: 50%;
-    transform: translateX(-50%);
+  /* ===== SOUL COUNTER ===== */
+  #soul-counter {
     display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
-    animation: fadeUp 1s ease 1.4s both;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--soul-bright);
+  }
+
+  #soul-counter .soul-gem {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--soul-bright), var(--soul-blue));
+    box-shadow: 0 0 8px var(--soul-blue);
+    display: inline-block;
+  }
+
+  /* ===== BONFIRE PROGRESS ===== */
+  #bonfire-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bonfire-node {
+    width: 14px; height: 14px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bonfire-node .flame {
+    width: 10px; height: 10px;
+    background: var(--ash-dim);
+    clip-path: polygon(50% 0%, 80% 40%, 100% 70%, 80% 100%, 20% 100%, 0% 70%, 20% 40%);
+    transition: all 0.4s ease;
+  }
+
+  .bonfire-node.lit .flame {
+    background: var(--fire-bright);
+    box-shadow: 0 0 6px var(--fire), 0 0 12px var(--fire-dim);
+    animation: flicker 1.5s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(0.95) translateY(-1px); }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* ===== BOTTOM CONTROLS ===== */
+  #controls {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+    z-index: 100;
+  }
+
+  .ctrl-btn {
+    background: transparent;
+    border: 1px solid var(--gold-dim);
     color: var(--gold);
-    opacity: 0.6;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 8px 24px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .ctrl-btn:hover {
+    border-color: var(--gold);
+    background: rgba(200, 169, 110, 0.1);
+    box-shadow: 0 0 12px rgba(200, 169, 110, 0.3);
+  }
+
+  .ctrl-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  #slide-num {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--ash-dim);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ===== FOG GATE TRANSITION ===== */
+  #fog-gate {
+    position: fixed;
+    inset: 0;
+    background: rgba(200, 169, 110, 0.05);
+    backdrop-filter: blur(0px);
+    opacity: 0;
+    z-index: 90;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  #fog-gate.active {
+    opacity: 1;
+  }
+
+  /* ===== BONFIRE NOTIFICATION ===== */
+  #bonfire-notif {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    text-align: center;
+    transition: all 0.5s ease;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  #bonfire-notif.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #bonfire-notif p.top {
     font-family: 'Cinzel', serif;
     font-size: 10px;
     letter-spacing: 4px;
-    transition: opacity 0.3s;
-  }
-  .scroll-cta:hover { opacity: 1; }
-  .scroll-arrow {
-    width: 20px; height: 20px;
-    border-right: 1px solid var(--gold);
-    border-bottom: 1px solid var(--gold);
-    transform: rotate(45deg);
-    animation: bounce 2s infinite;
+    color: var(--fire-bright);
+    text-transform: uppercase;
+    margin-bottom: 4px;
   }
 
-  @keyframes bounce {
-    0%,100% { transform: rotate(45deg) translateY(0); }
-    50% { transform: rotate(45deg) translateY(6px); }
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .nav-tabs {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    background: rgba(10,4,2,0.97);
-    border-bottom: 1px solid rgba(201,168,76,0.2);
-    backdrop-filter: blur(12px);
-    padding: 0 20px;
-    flex-wrap: wrap;
-  }
-
-  .tab-btn {
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    background: none;
-    border: none;
-    padding: 20px 24px;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    white-space: nowrap;
-  }
-  .tab-btn::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 50%; right: 50%;
-    height: 2px;
-    background: var(--gold);
-    transition: all 0.3s;
-  }
-  .tab-btn:hover { color: var(--parchment); }
-  .tab-btn.active { color: var(--gold); }
-  .tab-btn.active::after { left: 15%; right: 15%; }
-
-  .section { display: none; animation: sectionIn 0.5s ease both; }
-  .section.active { display: block; }
-  @keyframes sectionIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .synopsis-wrap {
-    max-width: 860px;
-    margin: 80px auto;
-    padding: 0 40px;
-  }
-
-  .section-label {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 5px;
+  #bonfire-notif p.bottom {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 16px;
     color: var(--gold);
-    opacity: 0.7;
-    margin-bottom: 16px;
+    letter-spacing: 2px;
+  }
+
+  /* ===== DECORATIVE DIVIDER ===== */
+  .divider {
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    margin: 16px 0;
   }
-  .section-label::before, .section-label::after {
+
+  .divider::before, .divider::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3));
-  }
-  .section-label::after { background: linear-gradient(90deg, rgba(201,168,76,0.3), transparent); }
-
-  .section-heading {
-    font-family: 'IM Fell English', serif;
-    font-size: clamp(32px, 5vw, 52px);
-    font-weight: 400;
-    font-style: italic;
-    line-height: 1.2;
-    margin-bottom: 32px;
-    color: var(--cream);
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
   }
 
-  .synopsis-text {
-    font-size: 19px;
-    color: rgba(245,237,224,0.82);
+  .divider-icon {
+    color: var(--fire);
+    font-size: 16px;
   }
 
-  .data-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1px;
-    background: rgba(201,168,76,0.15);
-    margin: 60px 0;
-    border: 1px solid rgba(201,168,76,0.15);
-  }
-  .data-card {
-    background: rgba(26,10,5,0.9);
-    padding: 28px 20px;
+  /* ===== SLIDE-SPECIFIC STYLES ===== */
+
+  /* --- PORTADA --- */
+  #slide-0 {
+    background:
+      radial-gradient(ellipse at 50% 60%, rgba(212, 105, 10, 0.08) 0%, transparent 60%),
+      var(--stone-dark);
     text-align: center;
   }
-  .data-card .label {
-    font-family: 'Cinzel', serif;
-    font-size: 9px;
-    letter-spacing: 3px;
-    color: var(--gold);
-    opacity: 0.6;
-    margin-bottom: 10px;
-    display: block;
-  }
-  .data-card .value {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    font-size: 20px;
-    color: var(--cream);
-  }
 
-  .source-panel {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 60px 50px;
-  }
-  .source-panel-1 { background: linear-gradient(160deg, #1a0808 0%, #0f0404 100%); }
-  .source-panel-2 { background: linear-gradient(160deg, #081018 0%, #040a10 100%); }
-
-  .source-badge {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-  }
-  .source-num {
+  .title-eyebrow {
     font-family: 'Cinzel', serif;
     font-size: 11px;
-    letter-spacing: 2px;
-    padding: 4px 14px;
-    border: 1px solid;
-    border-radius: 20px;
-  }
-  .s1 .source-num { color: var(--accent1); border-color: var(--accent1); }
-  .s2 .source-num { color: var(--accent2); border-color: var(--accent2); }
-  .source-site {
-    font-style: italic;
-    font-size: 13px;
-    color: var(--muted);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--fire);
+    margin-bottom: 20px;
   }
 
-  .source-title {
-    font-family: 'IM Fell English', serif;
-    font-size: clamp(22px, 3vw, 32px);
-    line-height: 1.25;
-    margin-bottom: 28px;
-    color: var(--cream);
-  }
-  .source-body { font-size: 17px; line-height: 1.8; color: rgba(245,237,224,0.75); }
-  .source-body p { margin-bottom: 20px; }
-
-  .highlight-box {
-    border-left: 3px solid;
-    padding: 20px 24px;
-    margin: 28px 0;
-    border-radius: 0 8px 8px 0;
-  }
-  .s1 .highlight-box { border-color: var(--accent1); background: rgba(201,64,64,0.08); }
-  .s2 .highlight-box { border-color: var(--accent2); background: rgba(64,144,201,0.08); }
-  .highlight-box p {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    font-size: 19px;
-    color: var(--parchment);
-    margin: 0;
-  }
-
-  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
-  .tag {
-    font-family: 'Cinzel', serif;
-    font-size: 9px;
-    letter-spacing: 2px;
-    padding: 5px 12px;
-    border-radius: 20px;
-  }
-  .s1 .tag { background: rgba(201,64,64,0.12); color: #e07070; }
-  .s2 .tag { background: rgba(64,144,201,0.12); color: #70b0e0; }
-
-  .compare-wrap { max-width: 1100px; margin: 80px auto; padding: 0 40px; }
-
-  .compare-table { width: 100%; border-collapse: collapse; margin-top: 48px; }
-  .compare-table th {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 3px;
-    padding: 16px 20px;
-    text-align: left;
-    border-bottom: 1px solid rgba(201,168,76,0.3);
-  }
-  .compare-table th:nth-child(1) { color: var(--gold); opacity: 0.6; }
-  .compare-table th:nth-child(2) { color: var(--accent1); }
-  .compare-table th:nth-child(3) { color: var(--accent2); }
-  .compare-table td {
-    padding: 20px;
-    vertical-align: top;
-    border-bottom: 1px solid rgba(139,26,26,0.3);
-    font-size: 15px;
-    line-height: 1.7;
-    color: rgba(245,237,224,0.85);
-    background: rgba(80,10,10,0.6);
-  }
-  .compare-table tr:hover td { background: rgba(110,15,15,0.75); }
-  .compare-table td:first-child {
-    font-family: 'Cinzel', serif;
-    font-size: 9px;
-    letter-spacing: 2px;
+  .main-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1.1;
     color: var(--gold);
-    opacity: 0.8;
-    white-space: nowrap;
+    text-shadow: 0 0 40px rgba(212, 105, 10, 0.4);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
   }
 
-  .verdict-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    margin-top: 60px;
-    background: rgba(201,168,76,0.1);
+  .main-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    color: var(--fire-bright);
+    letter-spacing: 4px;
+    margin-bottom: 32px;
   }
-  @media(max-width:600px) { .verdict-grid { grid-template-columns: 1fr; } }
 
-  .verdict-card { padding: 44px 38px; }
-  .verdict-card:first-child { background: rgba(201,64,64,0.07); }
-  .verdict-card:last-child  { background: rgba(64,144,201,0.07); }
+  .lore-text {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ash-dim);
+    max-width: 520px;
+    line-height: 1.8;
+    margin: 0 auto 32px;
+    border-left: 2px solid var(--fire-dim);
+    padding-left: 16px;
+    text-align: left;
+  }
 
-  .verdict-label {
+  .cover-meta {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .cover-meta-item {
+    text-align: center;
+  }
+
+  .cover-meta-item .label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--ash-dim);
+    display: block;
+  }
+
+  .cover-meta-item .value {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Flame SVG on portada */
+  .bonfire-svg {
+    width: 80px;
+    height: 100px;
+    margin: 0 auto 24px;
+    display: block;
+  }
+
+  /* Corner ornaments */
+  .corner-tl, .corner-tr, .corner-bl, .corner-br {
+    position: absolute;
+    width: 60px; height: 60px;
+  }
+
+  .corner-tl { top: 20px; left: 20px; border-top: 2px solid var(--gold-dim); border-left: 2px solid var(--gold-dim); }
+  .corner-tr { top: 20px; right: 20px; border-top: 2px solid var(--gold-dim); border-right: 2px solid var(--gold-dim); }
+  .corner-bl { bottom: 20px; left: 20px; border-bottom: 2px solid var(--gold-dim); border-left: 2px solid var(--gold-dim); }
+  .corner-br { bottom: 20px; right: 20px; border-bottom: 2px solid var(--gold-dim); border-right: 2px solid var(--gold-dim); }
+
+  /* --- NIVEL SLIDES --- */
+  .level-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .level-tag {
+    display: inline-block;
     font-family: 'Cinzel', serif;
     font-size: 9px;
     letter-spacing: 4px;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .verdict-card:first-child .verdict-label { color: var(--accent1); }
-  .verdict-card:last-child .verdict-label  { color: var(--accent2); }
-
-  .verdict-text {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    font-size: clamp(17px, 2vw, 22px);
-    line-height: 1.55;
-    color: var(--cream);
+    text-transform: uppercase;
+    color: var(--fire);
+    border: 1px solid var(--fire-dim);
+    padding: 4px 16px;
+    margin-bottom: 10px;
   }
 
-  .chars-wrap { max-width: 1000px; margin: 80px auto; padding: 0 40px; }
-  .chars-grid {
+  .level-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    line-height: 1.2;
+  }
+
+  /* Content grid */
+  .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 2px;
-    background: rgba(201,168,76,0.1);
-    margin-top: 48px;
+    gap: 16px;
+    width: 100%;
+    max-width: 960px;
   }
-  .char-card {
-    background: linear-gradient(160deg, #120808 0%, #0c0404 100%);
-    padding: 36px 28px;
-    cursor: pointer;
-    transition: all 0.3s;
+
+  .content-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .content-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .content-grid.cols-12 { grid-template-columns: 1.2fr 1fr; }
+
+  /* Scroll tablet (info box) */
+  .scroll-tablet {
+    background: rgba(26, 22, 20, 0.9);
+    border: 1px solid var(--gold-dim);
+    padding: 20px 24px;
     position: relative;
-    overflow: hidden;
   }
-  .char-card::after {
+
+  .scroll-tablet::before {
     content: '';
     position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--blood);
-    transform: scaleX(0);
-    transition: transform 0.3s;
+    top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border: 1px solid rgba(200, 169, 110, 0.15);
+    pointer-events: none;
   }
-  .char-card:hover { background: linear-gradient(160deg, #1c0a0a 0%, #150606 100%); }
-  .char-card:hover::after { transform: scaleX(1); }
 
-  .char-initial {
+  .scroll-tablet h3 {
     font-family: 'Cinzel', serif;
-    font-size: 48px;
-    color: rgba(139,26,26,0.3);
-    line-height: 1;
-    margin-bottom: 12px;
-    transition: color 0.3s;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--fire-bright);
+    margin-bottom: 10px;
+    text-transform: uppercase;
   }
-  .char-card:hover .char-initial { color: rgba(139,26,26,0.6); }
-  .char-name { font-family: 'IM Fell English', serif; font-size: 22px; color: var(--cream); margin-bottom: 8px; }
-  .char-role {
-    font-family: 'Cinzel', serif;
-    font-size: 9px;
-    letter-spacing: 3px;
-    color: var(--gold);
-    opacity: 0.6;
-    margin-bottom: 14px;
-    display: block;
-  }
-  .char-desc { font-size: 15px; color: rgba(245,237,224,0.6); line-height: 1.7; }
-  .char-detail {
-    display: none;
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(201,168,76,0.15);
+
+  .scroll-tablet p, .scroll-tablet li {
+    font-family: 'IM Fell English', serif;
     font-size: 14px;
-    color: rgba(245,237,224,0.5);
+    color: var(--ash);
     line-height: 1.7;
+  }
+
+  .scroll-tablet ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .scroll-tablet ul li::before {
+    content: '›';
+    color: var(--fire);
+    margin-right: 8px;
+    font-weight: bold;
+  }
+
+  /* Item description box (Dark Souls tooltip style) */
+  .item-box {
+    background: rgba(10, 8, 7, 0.95);
+    border: 1px solid var(--gold-dim);
+    border-top: 3px solid var(--fire);
+    padding: 16px 20px;
+    font-family: 'IM Fell English', serif;
+  }
+
+  .item-box .item-name {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .item-box .item-type {
+    font-size: 10px;
+    color: var(--ash-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
     font-style: italic;
   }
-  .char-card.open .char-detail { display: block; }
-  .char-toggle {
+
+  .item-box .item-desc {
+    font-size: 13px;
+    color: var(--ash);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* Stat row */
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 6px 0;
+  }
+
+  .stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--ash-dim);
+    min-width: 70px;
+    text-transform: uppercase;
+  }
+
+  .stat-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--stone-light);
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    background: var(--fire);
+    transition: width 0.5s ease;
+  }
+
+  .stat-bar-fill.gold { background: var(--gold); }
+  .stat-bar-fill.soul { background: var(--soul-blue); }
+
+  .stat-val {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--ash);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* Boss battle (vs comparison) */
+  .boss-arena {
+    width: 100%;
+    max-width: 960px;
+  }
+
+  .vs-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .vs-header .boss-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .vs-header .boss-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 24px;
+    color: var(--gold);
+  }
+
+  .vs-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .player-card {
+    background: rgba(15, 12, 10, 0.95);
+    border: 1px solid var(--gold-dim);
+    padding: 20px;
+  }
+
+  .player-card.p1 { border-top: 3px solid var(--fire); }
+  .player-card.p2 { border-top: 3px solid var(--soul-blue); }
+
+  .player-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .p1 .player-label { color: var(--fire); }
+  .p2 .player-label { color: var(--soul-bright); }
+
+  .player-name {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .p1 .player-name { color: var(--fire-bright); }
+  .p2 .player-name { color: var(--soul-bright); }
+
+  .vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    padding-top: 48px;
+  }
+
+  .vs-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    color: var(--gold);
+    opacity: 0.8;
+  }
+
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(200, 169, 110, 0.1);
+  }
+
+  .compare-row .crit {
     font-family: 'Cinzel', serif;
     font-size: 9px;
     letter-spacing: 2px;
-    color: var(--gold);
-    opacity: 0.5;
-    margin-top: 12px;
-    display: block;
-  }
-
-  .themes-wrap { max-width: 900px; margin: 80px auto; padding: 0 40px 100px; }
-  .theme-item {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 28px;
-    align-items: start;
-    padding: 36px 0;
-    border-bottom: 1px solid rgba(201,168,76,0.08);
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.5s;
-  }
-  .theme-item.visible { opacity: 1; transform: translateX(0); }
-  .theme-num {
-    font-family: 'Cinzel', serif;
-    font-size: 48px;
-    font-weight: 700;
-    color: rgba(139,26,26,0.22);
-    line-height: 1;
-    text-align: right;
-  }
-  .theme-content h3 { font-family: 'IM Fell English', serif; font-size: 26px; color: var(--cream); margin-bottom: 10px; }
-  .theme-content p { font-size: 16px; color: rgba(245,237,224,0.65); line-height: 1.8; }
-
-  footer {
+    color: var(--ash-dim);
+    text-transform: uppercase;
     text-align: center;
-    padding: 60px 20px;
-    border-top: 1px solid rgba(201,168,76,0.1);
+  }
+
+  .compare-row .val {
+    font-size: 13px;
+    color: var(--ash);
+    line-height: 1.4;
+  }
+
+  .compare-row .val.left { text-align: right; }
+  .compare-row .val.right { text-align: left; }
+
+  .compare-row .win { color: var(--fire-bright); font-style: italic; }
+  .compare-row .win-blue { color: var(--soul-bright); font-style: italic; }
+
+  /* IP address display */
+  .ip-display {
+    font-family: 'Cinzel', monospace;
+    font-size: 28px;
+    color: var(--soul-bright);
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(127, 191, 255, 0.4);
+    text-align: center;
+    padding: 16px;
+    border: 1px solid var(--soul-blue);
+    margin: 8px 0;
+  }
+
+  .packet-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 16px 0;
+  }
+
+  .pf-node {
+    background: var(--stone-mid);
+    border: 1px solid var(--gold-dim);
+    padding: 8px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .pf-arrow {
+    color: var(--fire);
+    font-size: 18px;
+  }
+
+  /* Routing table */
+  .routing-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IM Fell English', serif;
+    font-size: 13px;
+  }
+
+  .routing-table th {
+    background: rgba(212, 105, 10, 0.15);
+    border: 1px solid var(--fire-dim);
+    padding: 8px 12px;
     font-family: 'Cinzel', serif;
     font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    opacity: 0.6;
+    letter-spacing: 2px;
+    color: var(--fire-bright);
+    text-transform: uppercase;
+    text-align: left;
   }
-  footer a { color: var(--gold); text-decoration: none; opacity: 0.7; }
-  footer a:hover { opacity: 1; }
 
-  @media(max-width:600px) {
-    .source-panel { padding: 36px 24px; }
-    .compare-wrap, .chars-wrap, .themes-wrap, .synopsis-wrap { padding: 0 20px; }
-    .compare-table { font-size: 13px; }
-    .compare-table td, .compare-table th { padding: 14px 10px; }
+  .routing-table td {
+    border: 1px solid rgba(200, 169, 110, 0.2);
+    padding: 7px 12px;
+    color: var(--ash);
   }
+
+  .routing-table tr:nth-child(even) td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .routing-table tr:hover td {
+    background: rgba(212, 105, 10, 0.05);
+  }
+
+  .routing-table .highlight td {
+    color: var(--fire-bright);
+    background: rgba(212, 105, 10, 0.08);
+  }
+
+  /* Cable diagram */
+  .cable-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 16px;
+  }
+
+  .device-box {
+    background: var(--stone-mid);
+    border: 1px solid var(--gold-dim);
+    padding: 12px 16px;
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .device-box .device-icon { font-size: 24px; margin-bottom: 4px; }
+  .device-box .device-name {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .cable-line {
+    flex: 1;
+    height: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+  }
+
+  .cable-line::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--fire-dim) 0px, var(--fire-dim) 8px, transparent 8px, transparent 12px);
+  }
+
+  .cable-label {
+    position: absolute;
+    top: -20px;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--fire);
+    white-space: nowrap;
+    background: var(--stone-dark);
+    padding: 0 4px;
+  }
+
+  /* Conclusion */
+  .conclusion-box {
+    background: rgba(10, 8, 7, 0.95);
+    border: 1px solid var(--gold);
+    border-top: 3px solid var(--fire-bright);
+    padding: 24px 28px;
+    max-width: 700px;
+    position: relative;
+  }
+
+  .conclusion-box h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--fire-bright);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .conclusion-box p {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ash);
+    line-height: 1.9;
+  }
+
+  /* "YOU DIED" style text */
+  .died-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 42px;
+    color: var(--blood);
+    letter-spacing: 6px;
+    text-shadow: 0 0 40px rgba(139, 26, 26, 0.6);
+    text-align: center;
+    opacity: 0.15;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* Level tag colors */
+  .level-tag.completed { color: var(--fire-bright); border-color: var(--fire); }
+
+  /* Fade in animation */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide.active .level-header,
+  .slide.active .content-grid,
+  .slide.active .boss-arena,
+  .slide.active .lore-text,
+  .slide.active .conclusion-box {
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .slide.active .level-header { animation-delay: 0.1s; }
+  .slide.active .content-grid { animation-delay: 0.2s; }
+
+  /* Large center icon for portada */
+  .bonfire-art {
+    font-size: 64px;
+    margin-bottom: 8px;
+    animation: glowPulse 2s infinite alternate;
+  }
+
+  @keyframes glowPulse {
+    from { filter: drop-shadow(0 0 8px var(--fire-dim)); }
+    to { filter: drop-shadow(0 0 24px var(--fire)); }
+  }
+
+  /* Tag badge */
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border: 1px solid;
+    margin: 2px;
+  }
+
+  .tag-badge.green { color: #7AB648; border-color: #4A7020; background: rgba(74, 112, 32, 0.15); }
+  .tag-badge.red { color: #E05050; border-color: #802020; background: rgba(128, 32, 32, 0.15); }
+  .tag-badge.blue { color: var(--soul-bright); border-color: var(--soul-blue); background: rgba(74, 143, 212, 0.15); }
+  .tag-badge.orange { color: var(--fire-bright); border-color: var(--fire-dim); background: rgba(212, 105, 10, 0.15); }
+
+  /* Tooltip lore */
+  .lore-card {
+    border-left: 2px solid var(--fire-dim);
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.4);
+    margin-bottom: 12px;
+  }
+
+  .lore-card p {
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ash-dim);
+    line-height: 1.6;
+  }
+
 </style>
 </head>
 <body>
 
-<section class="hero">
-  <div class="hero-year">FIÓDOR MIJÁILOVICH DOSTOIEVSKI · 1866</div>
-  <h1 class="hero-title">
-    Crimen
-    <span class="hero-amp">y</span>
-    Castigo
-  </h1>
-  <p class="hero-author">Reseña Interactiva · Dos Perspectivas</p>
-  <p style="font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,18px);color:rgba(201,168,76,0.6);letter-spacing:2px;margin-top:10px;animation:fadeUp 1s ease 0.7s both;">por Roberto Monforte e Itzel Ku</p>
-  <div class="hero-divider"></div>
-  <p class="hero-tagline">«En los dilemas de Raskólnikov están la ansiedad, el pánico, la depresión, la esperanza, el amor, la muerte, el odio…»</p>
-  <div class="scroll-cta" onclick="document.querySelector('.nav-tabs').scrollIntoView({behavior:'smooth'})">
-    EXPLORAR
-    <div class="scroll-arrow"></div>
+<!-- FOG GATE -->
+<div id="fog-gate"></div>
+
+<!-- BONFIRE NOTIFICATION -->
+<div id="bonfire-notif">
+  <p class="top">⬆ bonfire lit</p>
+  <p class="bottom" id="notif-text">Nivel completado</p>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-left">
+    <div id="bonfire-bar"></div>
+    <span id="slide-title-hud">Portada</span>
   </div>
-</section>
+  <div id="soul-counter">
+    <div class="soul-gem"></div>
+    <span id="soul-count">0</span>
+    <span style="font-size:10px; color: var(--ash-dim); letter-spacing:1px;">ALMAS</span>
+  </div>
+</div>
 
-<nav class="nav-tabs">
-  <button class="tab-btn active" onclick="showTab('sinopsis',this)">SINOPSIS</button>
-  <button class="tab-btn" onclick="showTab('fuente1',this)">FUENTE I</button>
-  <button class="tab-btn" onclick="showTab('fuente2',this)">FUENTE II</button>
-  <button class="tab-btn" onclick="showTab('comparativa',this)">COMPARATIVA</button>
-  <button class="tab-btn" onclick="showTab('personajes',this)">PERSONAJES</button>
-  <button class="tab-btn" onclick="showTab('temas',this)">TEMAS</button>
-</nav>
+<!-- ===================== SLIDES ===================== -->
+<div id="presentation">
 
-<!-- SINOPSIS -->
-<section class="section active" id="sinopsis">
-  <div class="synopsis-wrap">
-    <div class="section-label">PRESENTACIÓN DE LA OBRA</div>
-    <h2 class="section-heading">Una novela sobre el alma que se desgarra</h2>
-    <p class="synopsis-text">
-      <em>Crimen y castigo</em> (1866) es una de las novelas más influyentes de la literatura universal.
-      Rodión Raskólnikov, exestudiante hundido en la miseria en San Petersburgo, planea asesinar a una
-      usurera convencido de que su superioridad intelectual lo sitúa por encima de la moral convencional.
+  <!-- SLIDE 0: PORTADA -->
+  <div class="slide active" id="slide-0">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <p class="title-eyebrow">▶&ensp;Iniciar misión&ensp;◀</p>
+    <div class="bonfire-art">🔥</div>
+    <h1 class="main-title">Network Masters</h1>
+    <h2 class="main-subtitle">La Ruta de los Datos</h2>
+
+    <div class="divider"><span class="divider-icon">⬥</span></div>
+
+    <p class="lore-text">
+      "Una empresa internacional ha perdido la comunicación entre sus sucursales. Las rutas están perdidas,
+      los paquetes no llegan. Tu equipo ha sido invocado para restaurar la conectividad.
+      Solo los que dominen el routing podrán salvar la red."
     </p>
-    <br>
-    <p class="synopsis-text">
-      Pero el verdadero crimen no es el asesinato: es la guerra interior que lo consume. La paranoia,
-      la culpa y la alienación son el castigo real, mucho antes de que la justicia formal intervenga.
-      Dostoievski construye así una obra que es novela psicológica, ensayo filosófico y drama moral al mismo tiempo.
-    </p>
 
-    <div class="data-strip">
-      <div class="data-card"><span class="label">PUBLICACIÓN</span><span class="value">1866</span></div>
-      <div class="data-card"><span class="label">GÉNERO</span><span class="value">Novela psicológica</span></div>
-      <div class="data-card"><span class="label">ESCENARIO</span><span class="value">San Petersburgo</span></div>
-      <div class="data-card"><span class="label">CORRIENTE</span><span class="value">Realismo · Existencialismo</span></div>
-      <div class="data-card"><span class="label">PROTAGONISTA</span><span class="value">Rodión Raskólnikov</span></div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="label">Asignatura</span>
+        <span class="value">Networking y Comunicaciones</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="label">Actividad</span>
+        <span class="value">ADA 17 — Routing</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="label">Clase</span>
+        <span class="value">6C</span>
+      </div>
     </div>
 
-    <div class="section-label">DOS LECTURAS</div>
-    <h3 style="font-family:'IM Fell English',serif;font-size:26px;font-style:italic;color:var(--cream);margin-bottom:20px;">Una obra, dos miradas</h3>
-    <p class="synopsis-text">
-      La <strong style="color:var(--accent1)">Fuente 1</strong> (<em>Leer es vivir dos veces</em>) es una reseña apasionada y personal que destaca la atmósfera psicológica sofocante y los magistrales diálogos entre Raskólnikov y el inspector Porfiri.
-    </p>
-    <br>
-    <p class="synopsis-text">
-      La <strong style="color:var(--accent2)">Fuente 2</strong> (<em>Cultura Genial</em>) adopta un enfoque analítico y académico, situando la novela como ensayo filosófico sobre la moral, el individuo y la sociedad, e insertando a Dostoievski como pionero del existencialismo literario.
-    </p>
-    <br>
-    <p class="synopsis-text" style="color:rgba(245,237,224,0.5);font-style:italic;">
-      Navega por las pestañas para explorar cada fuente, su comparativa y los elementos clave de la obra.
+    <p style="margin-top:28px; font-family:'Cinzel',serif; font-size:10px; letter-spacing:3px; color:var(--ash-dim);">
+      Presiona [ AVANZAR ] para comenzar tu travesía
     </p>
   </div>
-</section>
 
-<!-- FUENTE 1 -->
-<section class="section s1" id="fuente1">
-  <div class="source-panel source-panel-1">
-    <div class="source-badge">
-      <span class="source-num">FUENTE I</span>
-      <span class="source-site">leeresvivirdosveces.com · Enero 2022</span>
+  <!-- SLIDE 1: NIVEL 1 — QUÉ ES EL ROUTING -->
+  <div class="slide" id="slide-1">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag">🔥 Bonfire I — Primera Hoguera</div>
+      <h2 class="level-title">¿Qué realiza el Routing?</h2>
     </div>
-    <h2 class="source-title">«Lo que los rusos hicieron con la Literatura está a la altura de muy pocos»</h2>
-    <div class="source-body">
-      <p>
-        Esta reseña, publicada en el blog literario <em>Leer es vivir dos veces</em>, parte de una premisa
-        entusiasta: la literatura rusa del siglo XIX es incomparable. El reseñador sitúa <em>Crimen y castigo</em>
-        junto a <em>Guerra y paz</em> y <em>Anna Karénina</em> como una de las novelas más influyentes
-        e internacionales de la tradición rusa.
-      </p>
-      <div class="highlight-box">
-        <p>El ambiente de asfixia que consigue generar Dostoievski en la mente del protagonista es el principal atractivo de la lectura.</p>
+
+    <div class="content-grid cols-12" style="max-width:960px;">
+      <div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>Definición</h3>
+          <p>El <strong style="color:var(--fire-bright)">routing</strong> (enrutamiento) es el proceso mediante el cual los datos viajan de una red a otra hasta llegar a su destino. Funciona como un sistema de navegación para los paquetes de información.</p>
+        </div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>¿Para qué sirve?</h3>
+          <ul>
+            <li>Determinar la <em>mejor ruta</em> para enviar datos</li>
+            <li>Conectar diferentes redes entre sí</li>
+            <li>Mantener la comunicación eficiente y estable</li>
+            <li>Evitar congestión y rutas rotas</li>
+          </ul>
+        </div>
+        <div class="scroll-tablet">
+          <h3>¿Cómo conecta redes?</h3>
+          <p>Los routers examinan la dirección IP de destino de cada paquete y consultan su tabla de enrutamiento para decidir por cuál interfaz reenviarlo, cruzando múltiples redes hasta alcanzar el host final.</p>
+        </div>
       </div>
-      <p>
-        Para esta fuente, el corazón de la novela es la tensión psicológica sostenida: la permanente
-        incertidumbre entre librarse del castigo o confesar, los momentos en que Raskólnikov casi es
-        detenido, y sobre todo el juego de inteligencias que mantiene con el inspector Porfiri.
-        El reseñador considera esos diálogos —en especial los de los capítulos V de la tercera y cuarta
-        parte— una de las cimas de la literatura universal, valoración que comparte con Stefan Zweig.
-      </p>
-      <p>
-        La fuente destaca también el papel de Sonia: para Dostoievski, únicamente la fe puede sanar
-        la depravación humana. Y subraya que el nombre de Raskólnikov, derivado del ruso «escisión»,
-        no es casual: apunta a su separación de la sociedad y de sus propias emociones.
-      </p>
-      <div class="highlight-box">
-        <p>Dos siglos después, nadie ha superado a Tolstói y Dostoievski, y seguimos leyendo sus novelas del siglo XIX para entender a la humanidad de hoy.</p>
+      <div>
+        <div class="item-box" style="margin-bottom:14px;">
+          <div class="item-name">Router</div>
+          <div class="item-type">Dispositivo de red — Capa 3</div>
+          <div class="item-desc">"Guardián de las rutas. Examina cada paquete que cruza sus puertas y decide el camino más sabio hacia la verdad del destino."</div>
+        </div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>Dispositivos que hacen Routing</h3>
+          <ul>
+            <li><strong style="color:var(--gold)">Router</strong> — principal responsable del enrutamiento</li>
+            <li><strong style="color:var(--gold)">Switch capa 3</strong> — routing entre VLANs</li>
+            <li><strong style="color:var(--gold)">Firewall</strong> — routing con seguridad</li>
+            <li><strong style="color:var(--gold)">PC con múltiples NICs</strong> — routing básico</li>
+          </ul>
+        </div>
+        <div class="lore-card">
+          <p>Ejemplo cotidiano: cuando envías un mensaje a un amigo, el paquete pasa por tu router doméstico → router de tu ISP → varios routers de Internet → router del ISP de tu amigo → su dispositivo.</p>
+        </div>
+        <div style="text-align:center; margin-top:10px;">
+          <svg width="120" height="80" viewBox="0 0 120 80" style="display:inline-block;">
+            <rect x="10" y="25" width="30" height="30" rx="3" fill="none" stroke="#8B3E05" stroke-width="1.5"/>
+            <text x="25" y="46" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#C8A96E">PC</text>
+            <rect x="45" y="20" width="30" height="40" rx="3" fill="none" stroke="#D4690A" stroke-width="1.5"/>
+            <text x="60" y="44" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#F5A623">ROUTER</text>
+            <rect x="80" y="25" width="30" height="30" rx="3" fill="none" stroke="#4A8FD4" stroke-width="1.5"/>
+            <text x="95" y="43" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#7FBFFF">DESTINO</text>
+            <line x1="40" y1="40" x2="45" y2="40" stroke="#8B3E05" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="75" y1="40" x2="80" y2="40" stroke="#D4690A" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <polygon points="43,37 47,40 43,43" fill="#D4690A"/>
+            <polygon points="78,37 82,40 78,43" fill="#4A8FD4"/>
+          </svg>
+        </div>
       </div>
-      <p>
-        La reseña concluye con una reflexión sobre la vigencia atemporal de estos autores: lo que hicieron
-        con la literatura solo es comparable, quizás, con Cervantes.
-      </p>
-    </div>
-    <div class="tag-list">
-      <span class="tag">PSICOLOGÍA</span>
-      <span class="tag">TENSIÓN NARRATIVA</span>
-      <span class="tag">PORFIRI VS. RASKÓLNIKOV</span>
-      <span class="tag">FE Y REDENCIÓN</span>
-      <span class="tag">LITERATURA RUSA</span>
-      <span class="tag">RESEÑA PERSONAL</span>
     </div>
   </div>
-</section>
 
-<!-- FUENTE 2 -->
-<section class="section s2" id="fuente2">
-  <div class="source-panel source-panel-2">
-    <div class="source-badge">
-      <span class="source-num">FUENTE II</span>
-      <span class="source-site">culturagenial.com · Análisis académico</span>
+  <!-- SLIDE 2: NIVEL 2 — TIPOS DE ENRUTAMIENTO -->
+  <div class="slide" id="slide-2">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag">🔥 Bonfire II — Hoguera del Trifurcado</div>
+      <h2 class="level-title">Tipos de Enrutamiento</h2>
     </div>
-    <h2 class="source-title">«Crimen y castigo» como novela-ensayo filosófico y social</h2>
-    <div class="source-body">
-      <p>
-        <em>Cultura Genial</em> aborda la novela desde una perspectiva analítica y estructural,
-        definiéndola no solo como obra de ficción sino como un ensayo filosófico sobre la moral y
-        la relación del individuo con la sociedad. El mundo interno de los personajes tiene tanta
-        importancia como el externo, lo que aproxima la obra a un tratado de psicología humana.
-      </p>
-      <div class="highlight-box">
-        <p>La novela adquiere un tono de ensayo filosófico sobre la moral y la relación del individuo con la sociedad rusa: extremadamente pudorosa, católica, zarista y aristocrática.</p>
+
+    <div class="content-grid cols-3" style="max-width:980px;">
+
+      <!-- ESTÁTICO -->
+      <div>
+        <div class="item-box" style="margin-bottom:10px;">
+          <div class="item-name">Enrutamiento Estático</div>
+          <div class="item-type">Configuración manual</div>
+          <div class="item-desc">"Runas grabadas en piedra. Inmutables, predecibles. El administrador traza el camino y el paquete lo sigue sin cuestionarlo."</div>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Características</h3>
+          <ul>
+            <li>Rutas configuradas manualmente</li>
+            <li>No cambia automáticamente</li>
+            <li>Requiere intervención del admin</li>
+          </ul>
+          <div style="margin-top:10px;">
+            <div class="stat-row">
+              <span class="stat-label">Seguridad</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:90%"></div></div>
+              <span class="stat-val">Alta</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Escalabilidad</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:20%"></div></div>
+              <span class="stat-val">Baja</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Adaptación</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:5%"></div></div>
+              <span class="stat-val">Nula</span>
+            </div>
+          </div>
+          <p style="margin-top:10px; font-size:12px;"><span class="tag-badge green">✓ Poco tráfico</span><span class="tag-badge red">✗ Redes grandes</span></p>
+          <p style="margin-top:8px; font-size:12px; font-style:italic;">Uso: redes pequeñas, sucursales únicas, conexiones específicas.</p>
+        </div>
       </div>
-      <p>
-        La fuente plantea la pregunta central: ¿puede el asesinato de una persona despreciable ser
-        moralmente justificable si el objetivo es superior? Raskólnikov cree en la existencia de hombres
-        extraordinarios que trascienden la moral común, pero la novela desmonta esa teoría a través
-        de sus consecuencias.
-      </p>
-      <p>
-        Un aspecto peculiar es la interpretación del comportamiento de Raskólnikov tras el crimen:
-        sus provocaciones ante el juez, su delirio y su incapacidad para aprovechar lo robado parecen
-        indicar que, inconscientemente, el protagonista busca ser descubierto y castigado. El castigo
-        no viene de fuera: es deseado desde dentro.
-      </p>
-      <div class="highlight-box">
-        <p>Pareciera que Raskolnikov busca el castigo desde el primer segundo después del crimen, como si la confesión fuera la única salida posible a su delirio.</p>
+
+      <!-- DINÁMICO -->
+      <div>
+        <div class="item-box" style="margin-bottom:10px; border-top-color: var(--soul-blue);">
+          <div class="item-name" style="color:var(--soul-bright);">Enrutamiento Dinámico</div>
+          <div class="item-type">Protocolos automáticos</div>
+          <div class="item-desc">"Los routers hablan entre sí, comparten el conocimiento de las rutas y se adaptan cuando algún camino cae en la oscuridad."</div>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Características</h3>
+          <ul>
+            <li>Usa protocolos: RIP, OSPF, EIGRP, BGP</li>
+            <li>Se adapta automáticamente a fallos</li>
+            <li>Los routers intercambian información</li>
+          </ul>
+          <div style="margin-top:10px;">
+            <div class="stat-row">
+              <span class="stat-label">Seguridad</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:55%"></div></div>
+              <span class="stat-val">Media</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Escalabilidad</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:95%"></div></div>
+              <span class="stat-val">Alta</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Adaptación</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:90%"></div></div>
+              <span class="stat-val">Alta</span>
+            </div>
+          </div>
+          <p style="margin-top:10px; font-size:12px;"><span class="tag-badge blue">✓ Empresas</span><span class="tag-badge blue">✓ Internet</span></p>
+          <p style="margin-top:8px; font-size:12px; font-style:italic;">Uso: redes corporativas, ISPs, Internet (BGP).</p>
+        </div>
       </div>
-      <p>
-        La fuente contextualiza la obra en la biografía del autor: Dostoievski estuvo preso en 1849,
-        fue exiliado a Siberia y convivió nueve años con asesinos y criminales. Esa experiencia directa
-        es la base semiautobiográfica que da autenticidad a la novela. Finalmente, sitúa a Dostoievski
-        como pionero del existencialismo literario, anticipando la narrativa introspectiva del siglo XX.
-      </p>
-    </div>
-    <div class="tag-list">
-      <span class="tag">ENSAYO FILOSÓFICO</span>
-      <span class="tag">MORAL Y SOCIEDAD</span>
-      <span class="tag">EXISTENCIALISMO</span>
-      <span class="tag">ANÁLISIS ESTRUCTURAL</span>
-      <span class="tag">CONTEXTO BIOGRÁFICO</span>
-      <span class="tag">NOVELA-ENSAYO</span>
+
+      <!-- POR DEFECTO -->
+      <div>
+        <div class="item-box" style="margin-bottom:10px; border-top-color: var(--gold);">
+          <div class="item-name" style="color:var(--gold);">Enrutamiento por Defecto</div>
+          <div class="item-type">Ruta de último recurso</div>
+          <div class="item-desc">"Cuando ningún mapa menciona el destino, el viajero toma la única puerta que siempre está abierta."</div>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Características</h3>
+          <ul>
+            <li>Ruta 0.0.0.0/0 — acepta cualquier destino</li>
+            <li>Se usa cuando no hay ruta específica</li>
+            <li>Apunta al gateway del ISP</li>
+          </ul>
+          <div style="margin-top:10px;">
+            <div class="stat-row">
+              <span class="stat-label">Uso CPU</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:15%"></div></div>
+              <span class="stat-val">Mínimo</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Configuración</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:95%"></div></div>
+              <span class="stat-val">Simple</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Flexibilidad</span>
+              <div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:40%"></div></div>
+              <span class="stat-val">Media</span>
+            </div>
+          </div>
+          <p style="margin-top:10px; font-size:12px;"><span class="tag-badge orange">✓ Hogares</span><span class="tag-badge orange">✓ Stubs</span></p>
+          <p style="margin-top:8px; font-size:12px; font-style:italic;">Uso: redes domésticas, routers de borde hacia ISP.</p>
+        </div>
+      </div>
     </div>
   </div>
-</section>
 
-<!-- COMPARATIVA -->
-<section class="section" id="comparativa">
-  <div class="compare-wrap">
-    <div class="section-label">ANÁLISIS COMPARATIVO</div>
-    <h2 class="section-heading">Dos miradas sobre la misma oscuridad</h2>
+  <!-- SLIDE 3: NIVEL 3 — BOSS BATTLE -->
+  <div class="slide" id="slide-3">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
 
-    <table class="compare-table">
-      <thead>
-        <tr>
-          <th>DIMENSIÓN</th>
-          <th>⬥ FUENTE I · Leer es vivir dos veces</th>
-          <th>⬥ FUENTE II · Cultura Genial</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>ENFOQUE</td>
-          <td>Reseña personal y apasionada. Voz subjetiva de un lector entusiasta de la literatura rusa.</td>
-          <td>Análisis académico y estructural. Voz editorial que busca contextualizar y explicar la obra.</td>
-        </tr>
-        <tr>
-          <td>ELEMENTO CENTRAL</td>
-          <td>La atmósfera psicológica sofocante y la tensión de los diálogos entre Raskólnikov y Porfiri.</td>
-          <td>La dimensión filosófica: la pregunta sobre si el crimen puede ser moral, y el individuo ante la sociedad.</td>
-        </tr>
-        <tr>
-          <td>EL CASTIGO</td>
-          <td>Es interno y psicológico antes que formal. La confesión final libera al protagonista de su alienación.</td>
-          <td>El protagonista parece buscar activamente el castigo desde el primer momento; es una necesidad inconsciente.</td>
-        </tr>
-        <tr>
-          <td>PERSONAJE DE SONIA</td>
-          <td>Símbolo de la fe religiosa como único remedio a la depravación humana.</td>
-          <td>Parte del núcleo de apoyo que también atormenta moralmente al protagonista en términos morales.</td>
-        </tr>
-        <tr>
-          <td>CONTEXTO LITERARIO</td>
-          <td>Sitúa la novela en la cumbre de la literatura rusa junto a Tolstói. Cita a Stefan Zweig.</td>
-          <td>Enmarca la obra en el realismo y el existencialismo. Dostoievski como precursor del siglo XX.</td>
-        </tr>
-        <tr>
-          <td>CONTEXTO BIOGRÁFICO</td>
-          <td>No se desarrolla. El foco está en la experiencia lectora y el impacto de la obra.</td>
-          <td>Central: el encarcelamiento y el exilio del autor nutren directamente la autenticidad de la novela.</td>
-        </tr>
-        <tr>
-          <td>VIGENCIA</td>
-          <td>Explícita: leemos el siglo XIX para entender la humanidad de hoy.</td>
-          <td>Implícita: la novela anticipa las grandes corrientes narrativas del siglo XX.</td>
-        </tr>
-        <tr>
-          <td>TONO</td>
-          <td>Admirativo, íntimo, con juicios propios y exclamaciones entusiastas.</td>
-          <td>Expositivo, ordenado temáticamente, sin valoraciones personales.</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="boss-arena">
+      <div class="vs-header">
+        <p class="boss-eyebrow">⚔ Encuentro con el Señor del Camino ⚔</p>
+        <h2 class="boss-title">Boss Battle: Estático vs Dinámico</h2>
+        <div class="divider"><span class="divider-icon">☠</span></div>
+      </div>
 
-    <div class="verdict-grid">
-      <div class="verdict-card">
-        <span class="verdict-label">FUENTE I · SÍNTESIS</span>
-        <p class="verdict-text">
-          Una reseña que vive la obra como experiencia: valora la tensión, el genio narrativo
-          y la capacidad de Dostoievski para trazar el devenir del alma humana con precisión quirúrgica.
-          Es la voz de alguien atrapado por el libro.
+      <div class="vs-grid">
+        <!-- PLAYER 1 -->
+        <div class="player-card p1">
+          <div class="player-label">Player 1</div>
+          <div class="player-name">Enrutamiento<br>Estático</div>
+          <div style="font-size:13px; color:var(--ash); line-height:1.6;">
+            <p style="margin-bottom:8px; font-style:italic; color:var(--ash-dim);">"El Guerrero de Piedra. Predecible. Inquebrantable. Lento en adaptarse, pero jamás traicionado por un protocolo."</p>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="stat-row"><span class="stat-label">Seguridad</span><div class="stat-bar-wrap"><div class="stat-bar-fill gold" style="width:95%"></div></div><span class="stat-val">95</span></div>
+            <div class="stat-row"><span class="stat-label">Velocidad Config</span><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:70%"></div></div><span class="stat-val">70</span></div>
+            <div class="stat-row"><span class="stat-label">Adaptación</span><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:5%"></div></div><span class="stat-val">5</span></div>
+            <div class="stat-row"><span class="stat-label">Escalabilidad</span><div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:15%"></div></div><span class="stat-val">15</span></div>
+          </div>
+        </div>
+
+        <!-- VS -->
+        <div class="vs-divider"><span class="vs-text">VS</span></div>
+
+        <!-- PLAYER 2 -->
+        <div class="player-card p2">
+          <div class="player-label">Player 2</div>
+          <div class="player-name">Enrutamiento<br>Dinámico</div>
+          <div style="font-size:13px; color:var(--ash); line-height:1.6;">
+            <p style="margin-bottom:8px; font-style:italic; color:var(--ash-dim);">"El Espíritu Errante. Aprende, se adapta, sobrevive. Sus protocolos susurran rutas entre los routers del reino."</p>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="stat-row"><span class="stat-label">Seguridad</span><div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:60%"></div></div><span class="stat-val">60</span></div>
+            <div class="stat-row"><span class="stat-label">Velocidad Config</span><div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:40%"></div></div><span class="stat-val">40</span></div>
+            <div class="stat-row"><span class="stat-label">Adaptación</span><div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:95%"></div></div><span class="stat-val">95</span></div>
+            <div class="stat-row"><span class="stat-label">Escalabilidad</span><div class="stat-bar-wrap"><div class="stat-bar-fill soul" style="width:97%"></div></div><span class="stat-val">97</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison rows -->
+      <div style="margin-top:16px; background:rgba(10,8,7,0.8); border:1px solid var(--gold-dim); padding:12px 16px;">
+        <div class="compare-row">
+          <div class="val left win">Manual, rápida y simple</div>
+          <div class="crit">Configuración</div>
+          <div class="val right">Compleja, requiere planificación</div>
+        </div>
+        <div class="compare-row">
+          <div class="val left">Redes pequeñas / sucursales</div>
+          <div class="crit">Ideal para</div>
+          <div class="val right win-blue">Redes medianas y grandes</div>
+        </div>
+        <div class="compare-row">
+          <div class="val left">No se recupera solo</div>
+          <div class="crit">Ante fallos</div>
+          <div class="val right win-blue">Recalcula automáticamente</div>
+        </div>
+        <div class="compare-row" style="border:none;">
+          <div class="val left win">Sin overhead de protocolos</div>
+          <div class="crit">Uso de CPU</div>
+          <div class="val right">Mayor procesamiento</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: NIVEL 4 — IP ROUTING -->
+  <div class="slide" id="slide-4">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag">🔥 Bonfire IV — El Sello del Origen</div>
+      <h2 class="level-title">¿Qué es el Enrutamiento IP?</h2>
+    </div>
+
+    <div class="content-grid cols-2" style="max-width:960px;">
+      <div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>Dirección IP</h3>
+          <p>Una dirección IP es un identificador único asignado a cada dispositivo en una red. Funciona como la dirección de tu hogar en el mundo digital.</p>
+          <div class="ip-display" style="margin-top:12px;">192.168.1.10</div>
+          <p style="font-size:12px; color:var(--ash-dim); margin-top:6px; text-align:center;">IPv4 — 4 octetos de 8 bits cada uno</p>
+        </div>
+        <div class="scroll-tablet">
+          <h3>¿Qué es un paquete de datos?</h3>
+          <ul>
+            <li>Unidad básica de transmisión en redes</li>
+            <li>Contiene: cabecera + datos + checksum</li>
+            <li>La cabecera incluye IP origen e IP destino</li>
+            <li>Se reensamblan en el destino</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>¿Cómo usa el Router las IPs?</h3>
+          <ul>
+            <li>Recibe el paquete por una interfaz</li>
+            <li>Lee la IP destino del encabezado</li>
+            <li>Consulta su tabla de enrutamiento</li>
+            <li>Elige la mejor ruta (menor métrica)</li>
+            <li>Reenvía por la interfaz correcta</li>
+          </ul>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Flujo de un paquete</h3>
+          <div class="packet-flow">
+            <div class="pf-node">PC<br><small style="font-size:9px; color:var(--ash-dim);">192.168.1.10</small></div>
+            <span class="pf-arrow">→</span>
+            <div class="pf-node">ROUTER<br><small style="font-size:9px; color:var(--fire-dim);">Gateway</small></div>
+            <span class="pf-arrow">→</span>
+            <div class="pf-node">INTERNET<br><small style="font-size:9px; color:var(--soul-blue);">BGP hops</small></div>
+            <span class="pf-arrow">→</span>
+            <div class="pf-node">SERVIDOR<br><small style="font-size:9px; color:var(--ash-dim);">8.8.8.8</small></div>
+          </div>
+          <p style="font-size:12px; font-style:italic; color:var(--ash-dim); margin-top:8px;">Cada salto (hop) un router decide el siguiente tramo del camino.</p>
+        </div>
+        <div class="lore-card" style="margin-top:10px;">
+          <p>"El router no lee el contenido del paquete, solo su destino. Como un mensajero que no abre la carta, solo la entrega."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: NIVEL 5 — SWITCH-ROUTER -->
+  <div class="slide" id="slide-5">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag">🔥 Bonfire V — El Puente y la Puerta</div>
+      <h2 class="level-title">Conexión Switch – Router</h2>
+    </div>
+
+    <div class="content-grid cols-2" style="max-width:960px;">
+      <div>
+        <div class="item-box" style="margin-bottom:14px; border-top-color: var(--soul-blue);">
+          <div class="item-name" style="color:var(--soul-bright);">Switch</div>
+          <div class="item-type">Dispositivo de Capa 2 — LAN</div>
+          <div class="item-desc">"El guardián interno. Conecta dispositivos dentro de la misma red usando direcciones MAC. No cruza fronteras, pero domina el territorio local."</div>
+        </div>
+        <div class="item-box" style="margin-bottom:14px;">
+          <div class="item-name">Router</div>
+          <div class="item-type">Dispositivo de Capa 3 — Interredes</div>
+          <div class="item-desc">"El explorador de fronteras. Conecta redes distintas usando IPs. Decide si el paquete se queda en la LAN o cruza hacia el mundo exterior."</div>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Tipo de cable</h3>
+          <ul>
+            <li><strong style="color:var(--gold)">Par trenzado Cat5e/Cat6</strong> — conexión más común (RJ-45)</li>
+            <li><strong style="color:var(--gold)">Cable directo</strong> — PC a Switch, Switch a Router</li>
+            <li><strong style="color:var(--gold)">Cable cruzado</strong> — dispositivos del mismo tipo (aunque hoy el Auto-MDIX lo hace innecesario)</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>Ejemplo: Red LAN básica</h3>
+          <div style="padding:16px 0;">
+            <div class="cable-diagram" style="flex-wrap:wrap; gap:4px;">
+              <div class="device-box">
+                <div class="device-icon">💻</div>
+                <div class="device-name">PC 1</div>
+              </div>
+              <div class="cable-line" style="min-width:30px;"><div class="cable-label">Cat6</div></div>
+              <div class="device-box" style="border-color:var(--soul-blue);">
+                <div class="device-icon">🔀</div>
+                <div class="device-name" style="color:var(--soul-bright);">Switch</div>
+              </div>
+              <div class="cable-line" style="min-width:30px;"><div class="cable-label">Cat6</div></div>
+              <div class="device-box" style="border-color:var(--fire);">
+                <div class="device-icon">📡</div>
+                <div class="device-name" style="color:var(--fire-bright);">Router</div>
+              </div>
+              <div class="cable-line" style="min-width:30px;"><div class="cable-label">WAN</div></div>
+              <div class="device-box" style="border-color:var(--gold);">
+                <div class="device-icon">🌐</div>
+                <div class="device-name" style="color:var(--gold);">Internet</div>
+              </div>
+            </div>
+            <div class="cable-diagram" style="justify-content:flex-start; padding-left:20px; gap:4px;">
+              <div class="device-box">
+                <div class="device-icon">💻</div>
+                <div class="device-name">PC 2</div>
+              </div>
+              <div class="cable-line" style="min-width:30px;"></div>
+              <div style="width:68px; text-align:center; font-family:'Cinzel',serif; font-size:9px; color:var(--ash-dim); padding-top:10px;">↑<br>Mismo Switch</div>
+            </div>
+          </div>
+        </div>
+        <div class="scroll-tablet">
+          <h3>Paso a paso</h3>
+          <ul>
+            <li>PC se conecta a un puerto del switch (RJ-45)</li>
+            <li>Switch conecta al router por su uplink port</li>
+            <li>Router asigna IPs vía DHCP a los dispositivos</li>
+            <li>El router enruta el tráfico LAN → WAN</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: NIVEL 6 — TABLA DE ENRUTAMIENTO -->
+  <div class="slide" id="slide-6">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag">🔥 Bonfire VI — El Grimorio de Rutas</div>
+      <h2 class="level-title">Tabla de Enrutamiento</h2>
+    </div>
+
+    <div class="content-grid cols-12" style="max-width:960px;">
+      <div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>¿Qué es?</h3>
+          <p>La tabla de enrutamiento es el mapa de rutas almacenado en un router. Contiene todas las redes que el router conoce y cómo alcanzarlas.</p>
+        </div>
+        <div class="scroll-tablet" style="margin-bottom:14px;">
+          <h3>Información que contiene</h3>
+          <ul>
+            <li><strong style="color:var(--fire-bright)">Red destino</strong> — IP de la red objetivo</li>
+            <li><strong style="color:var(--fire-bright)">Máscara</strong> — define el tamaño de la red</li>
+            <li><strong style="color:var(--fire-bright)">Next Hop</strong> — siguiente router en el camino</li>
+            <li><strong style="color:var(--fire-bright)">Interfaz</strong> — por dónde salir</li>
+            <li><strong style="color:var(--fire-bright)">Métrica</strong> — costo de la ruta</li>
+            <li><strong style="color:var(--fire-bright)">Origen</strong> — C=conectada, S=estática, O=OSPF</li>
+          </ul>
+        </div>
+        <div class="lore-card">
+          <p>Si no existe ruta para el destino: el paquete es descartado y se envía un mensaje ICMP "Destination Unreachable" al origen. <em>El mensajero retorna con las manos vacías.</em></p>
+        </div>
+      </div>
+      <div>
+        <div style="overflow-x:auto;">
+          <table class="routing-table">
+            <thead>
+              <tr>
+                <th>Origen</th>
+                <th>Red Destino</th>
+                <th>Máscara</th>
+                <th>Next Hop</th>
+                <th>Interfaz</th>
+                <th>Métrica</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight">
+                <td>C</td>
+                <td>192.168.1.0</td>
+                <td>/24</td>
+                <td>Directa</td>
+                <td>Gi0/0</td>
+                <td>0</td>
+              </tr>
+              <tr class="highlight">
+                <td>C</td>
+                <td>10.0.0.0</td>
+                <td>/30</td>
+                <td>Directa</td>
+                <td>Gi0/1</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>S</td>
+                <td>172.16.0.0</td>
+                <td>/16</td>
+                <td>10.0.0.2</td>
+                <td>Gi0/1</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>O</td>
+                <td>192.168.2.0</td>
+                <td>/24</td>
+                <td>10.0.0.2</td>
+                <td>Gi0/1</td>
+                <td>110</td>
+              </tr>
+              <tr>
+                <td>S*</td>
+                <td>0.0.0.0</td>
+                <td>/0</td>
+                <td>203.0.113.1</td>
+                <td>Gi0/2</td>
+                <td>1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11px; color:var(--ash-dim); margin-top:8px; font-style:italic;">C=Conectada directamente &ensp;|&ensp; S=Estática &ensp;|&ensp; O=OSPF &ensp;|&ensp; S*=Ruta por defecto</p>
+        <div class="scroll-tablet" style="margin-top:12px;">
+          <h3>¿Cómo ayuda al router?</h3>
+          <p>El router busca la entrada que coincide mejor con la IP destino del paquete (longest prefix match) y lo reenvía según esa entrada. Sin tabla de rutas, el router es ciego.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: NIVEL FINAL — CONCLUSIÓN -->
+  <div class="slide" id="slide-7">
+    <div class="corner-tl"></div><div class="corner-tr"></div>
+    <div class="corner-bl"></div><div class="corner-br"></div>
+
+    <div class="level-header">
+      <div class="level-tag" style="color:var(--gold); border-color:var(--gold);">👑 Nivel Final — El Señor de los Anillos de Red</div>
+      <h2 class="level-title">Conclusión: La Victoria del Routing</h2>
+    </div>
+
+    <div style="max-width:800px; width:100%;">
+      <div class="conclusion-box" style="margin-bottom:16px;">
+        <h3>¿Por qué es importante el routing?</h3>
+        <p>El routing es la columna vertebral de Internet. Sin él, los paquetes no sabrían a dónde ir. Cada mensaje, video, juego o llamada que hacemos depende de que cientos de routers tomen decisiones correctas en milisegundos. Sin routing, la red sería una isla sin conexión al mundo.</p>
+      </div>
+
+      <div class="conclusion-box" style="margin-bottom:16px; border-top-color: var(--soul-blue);">
+        <h3>Tema más interesante</h3>
+        <p>La <strong style="color:var(--fire-bright)">tabla de enrutamiento</strong> resultó fascinante: es el "cerebro" del router, el grimorio donde están escritas todas las rutas posibles. La forma en que un router elige la ruta con el prefijo más largo (longest prefix match) es un algoritmo elegante que opera en tiempo real sobre millones de entradas en Internet.</p>
+      </div>
+
+      <div class="conclusion-box" style="border-top-color: var(--gold);">
+        <h3>Aplicación en redes reales</h3>
+        <p>En redes empresariales, el enrutamiento dinámico con OSPF mantiene la conectividad entre sucursales aunque fallen enlaces. En Internet, BGP enruta tráfico entre los sistemas autónomos de todo el mundo. En redes domésticas, la ruta por defecto nos conecta al ISP. El routing está activo cada segundo que estamos en línea.</p>
+      </div>
+
+      <div style="margin-top:20px; text-align:center;">
+        <div class="divider"><span class="divider-icon" style="font-size:20px;">🔥</span></div>
+        <p style="font-family:'Cinzel Decorative',serif; font-size:20px; color:var(--gold); letter-spacing:3px; margin-top:12px;">
+          MISIÓN COMPLETADA
+        </p>
+        <p style="font-family:'Cinzel',serif; font-size:10px; letter-spacing:4px; color:var(--fire); margin-top:6px;">
+          RED RESTAURADA &ensp;·&ensp; EMPRESA RECONECTADA &ensp;·&ensp; ALMAS RECOLECTADAS
         </p>
       </div>
-      <div class="verdict-card">
-        <span class="verdict-label">FUENTE II · SÍNTESIS</span>
-        <p class="verdict-text">
-          Un análisis que disecciona la obra como artefacto filosófico y social: la entiende como
-          un ensayo sobre la moral, el crimen y la conciencia, y sitúa a Dostoievski como
-          pionero del existencialismo literario.
-        </p>
-      </div>
-    </div>
-
-    <div style="margin-top:60px;padding:40px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.12);">
-      <div class="section-label">PUNTO DE ENCUENTRO</div>
-      <p style="font-family:'IM Fell English',serif;font-style:italic;font-size:22px;color:var(--cream);line-height:1.6;text-align:center;">
-        Ambas fuentes coinciden en que <em>Crimen y castigo</em> es una obra maestra que trasciende
-        su época, que la psicología del protagonista es su elemento más poderoso, y que el verdadero
-        castigo de Raskólnikov es interior, mucho antes de que la justicia formal intervenga.
-      </p>
     </div>
   </div>
-</section>
 
-<!-- PERSONAJES -->
-<section class="section" id="personajes">
-  <div class="chars-wrap">
-    <div class="section-label">GALERÍA DE PERSONAJES</div>
-    <h2 class="section-heading">Almas en conflicto</h2>
-    <p style="color:rgba(245,237,224,0.45);font-style:italic;margin-top:8px;font-size:15px;">Haz clic en cada tarjeta para ampliar.</p>
-    <div class="chars-grid">
+</div><!-- /presentation -->
 
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">R</div>
-        <div class="char-name">Rodión Raskólnikov</div>
-        <span class="char-role">PROTAGONISTA</span>
-        <p class="char-desc">Exestudiante empobrecido que cree en su superioridad intelectual y planea un asesinato para demostrarla.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">Su nombre deriva del ruso «escisión», aludiendo a su separación de la sociedad y de sus propias emociones. Comete el crimen creyendo ser un Napoleón, pero la paranoia y la culpa lo consumen desde el primer instante.</div>
-      </div>
-
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">P</div>
-        <div class="char-name">Porfiri Petrovich</div>
-        <span class="char-role">INSPECTOR DE POLICÍA</span>
-        <p class="char-desc">El antagonista intelectual de Raskólnikov. Lo tiene calado desde el principio y lo desafía con maestría psicológica.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">Stefan Zweig consideró sus diálogos con Raskólnikov una de las cimas de la literatura universal. Porfiri nunca acusa directamente: juega, insinúa, observa. Es el espejo que refleja la culpa del protagonista.</div>
-      </div>
-
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">S</div>
-        <div class="char-name">Sonia Marmeladova</div>
-        <span class="char-role">FIGURA DE REDENCIÓN</span>
-        <p class="char-desc">Joven en extrema miseria que conserva una fe religiosa inquebrantable. Representa la posibilidad de la salvación.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">Para la Fuente 1, encarna la idea de que solo la fe cura la depravación. Para la Fuente 2, forma parte del núcleo afectivo que también ejerce presión moral sobre Raskólnikov. Lo acompañará hasta Siberia.</div>
-      </div>
-
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">A</div>
-        <div class="char-name">Alena Ivanovna</div>
-        <span class="char-role">LA USURERA · VÍCTIMA</span>
-        <p class="char-desc">Prestamista a quien Raskólnikov considera moralmente despreciable y, por tanto, «prescindible» según su teoría.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">Su figura encarna la pregunta filosófica central de la novela: ¿puede el asesinato de alguien considerado «vulgar» ser moralmente justificable? Dostoievski usa este personaje para cuestionar la teoría del hombre superior.</div>
-      </div>
-
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">D</div>
-        <div class="char-name">Dunia Raskólnikova</div>
-        <span class="char-role">HERMANA DEL PROTAGONISTA</span>
-        <p class="char-desc">Su presencia en San Petersburgo intensifica la perturbación moral de Raskólnikov. La familia como espejo de la culpa.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">La posibilidad de que su familia descubra el crimen es una tortura constante. Su amor por ella contrasta con la frialdad con la que el protagonista pretendía actuar. La sociedad más íntima también castiga.</div>
-      </div>
-
-      <div class="char-card" onclick="toggleChar(this)">
-        <div class="char-initial">R</div>
-        <div class="char-name">Razumikhin</div>
-        <span class="char-role">AMIGO Y APOYO</span>
-        <p class="char-desc">Compañero de estudios, representante de la razón práctica frente al idealismo distorsionado del protagonista.</p>
-        <span class="char-toggle">+ VER MÁS</span>
-        <div class="char-detail">Forma parte del núcleo de apoyo que rodea a Raskólnikov, aunque también contribuye a la tensión moral. Su pragmatismo contrasta con el nihilismo teórico del protagonista y ofrece un contrapeso narrativo esencial.</div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- TEMAS -->
-<section class="section" id="temas">
-  <div class="themes-wrap">
-    <div class="section-label">GRANDES TEMAS</div>
-    <h2 class="section-heading">Los ejes que sostienen la obra</h2>
-
-    <div class="theme-item"><div class="theme-num">01</div><div class="theme-content">
-      <h3>El castigo psicológico</h3>
-      <p>Antes de cualquier condena formal, Raskólnikov ya está siendo castigado por su propia mente. La paranoia, el delirio y la culpa son el verdadero castigo de la novela. Ambas fuentes coinciden en que este es el elemento más poderoso de la obra.</p>
-    </div></div>
-
-    <div class="theme-item"><div class="theme-num">02</div><div class="theme-content">
-      <h3>El hombre superior y la moral</h3>
-      <p>Raskólnikov cree que los hombres extraordinarios están por encima de las leyes morales. Esta teoría —que anticipa a Nietzsche— es el motor del crimen y la base filosófica que Dostoievski se propone demoler a lo largo de la novela.</p>
-    </div></div>
-
-    <div class="theme-item"><div class="theme-num">03</div><div class="theme-content">
-      <h3>El individuo frente a la sociedad</h3>
-      <p>La sociedad rusa —católica, zarista, aristocrática— ejerce una presión moral constante. Incluso cuando Raskólnikov rechaza intelectualmente la culpa, la mirada de los demás lo persigue y lo doblega desde dentro.</p>
-    </div></div>
-
-    <div class="theme-item"><div class="theme-num">04</div><div class="theme-content">
-      <h3>La fe como redención</h3>
-      <p>A través de Sonia, Dostoievski propone que solo la fe puede salvar al hombre de su propia destrucción. No la razón ni la ley: es la rendición espiritual lo que finalmente redime a Raskólnikov en el epílogo.</p>
-    </div></div>
-
-    <div class="theme-item"><div class="theme-num">05</div><div class="theme-content">
-      <h3>El existencialismo avant la lettre</h3>
-      <p>Los monólogos interiores y la introspección radical anticipan el existencialismo literario del siglo XX. Dostoievski fue un pionero de la narrativa de conciencia que luego dominaría en Joyce, Kafka y Camus.</p>
-    </div></div>
-
-    <div class="theme-item"><div class="theme-num">06</div><div class="theme-content">
-      <h3>La tensión como técnica narrativa</h3>
-      <p>Cada encuentro con Porfiri, cada conversación casual podría ser el momento de la caída. Esa incertidumbre sostenida es lo que convierte a Dostoievski en un maestro del suspense psicológico y hace la lectura adictiva.</p>
-    </div></div>
-
-  </div>
-</section>
-
-<footer>
-  <p>Material interactivo elaborado a partir de las fuentes propuestas</p>
-  <p style="margin-top:12px;">
-    <a href="https://leeresvivirdosveces.com/2022/01/05/resena-de-crimen-y-castigo-de-fiodor-m-dostoievski/" target="_blank">FUENTE I</a>
-    &nbsp;·&nbsp;
-    <a href="https://www.culturagenial.com/es/libro-crimen-y-castigo-de-fiodor-dostoyevski/" target="_blank">FUENTE II</a>
-  </p>
-</footer>
+<!-- CONTROLS -->
+<div id="controls">
+  <button class="ctrl-btn" id="btn-prev" onclick="navigate(-1)" disabled>◀ Retroceder</button>
+  <span id="slide-num">1 / 8</span>
+  <button class="ctrl-btn" id="btn-next" onclick="navigate(1)">Avanzar ▶</button>
+</div>
 
 <script>
-  function showTab(id, btn) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
-    if (id === 'temas') setTimeout(observeThemes, 100);
-    window.scrollTo({ top: document.querySelector('.nav-tabs').offsetTop - 10, behavior: 'smooth' });
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let current = 0;
+
+const bonfireNames = [
+  'Portada', 'Bonfire I', 'Bonfire II', 'Boss Battle',
+  'Bonfire IV', 'Bonfire V', 'Bonfire VI', 'Nivel Final'
+];
+
+const soulValues = [0, 500, 1200, 3000, 5000, 7500, 10000, 15000];
+
+function buildBonfireBar() {
+  const bar = document.getElementById('bonfire-bar');
+  for (let i = 1; i < total; i++) {
+    const node = document.createElement('div');
+    node.className = 'bonfire-node';
+    node.id = 'bf-' + i;
+    node.innerHTML = '<div class="flame"></div>';
+    bar.appendChild(node);
+  }
+}
+
+function updateHUD(idx) {
+  document.getElementById('slide-title-hud').textContent = bonfireNames[idx] || '';
+  document.getElementById('slide-num').textContent = (idx + 1) + ' / ' + total;
+  document.getElementById('soul-count').textContent = soulValues[idx].toLocaleString();
+
+  // Lit bonfires up to current
+  for (let i = 1; i < total; i++) {
+    const node = document.getElementById('bf-' + i);
+    if (node) {
+      if (i <= idx) node.classList.add('lit');
+      else node.classList.remove('lit');
+    }
   }
 
-  function toggleChar(el) {
-    el.classList.toggle('open');
-    const toggle = el.querySelector('.char-toggle');
-    if (toggle) toggle.textContent = el.classList.contains('open') ? '− CERRAR' : '+ VER MÁS';
-  }
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === total - 1;
+}
 
-  function observeThemes() {
-    const items = document.querySelectorAll('.theme-item');
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e, i) => {
-        if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 120);
-      });
-    }, { threshold: 0.1 });
-    items.forEach(item => obs.observe(item));
-  }
+function showBonfireNotif(idx) {
+  if (idx === 0) return;
+  const notif = document.getElementById('bonfire-notif');
+  const text = document.getElementById('notif-text');
+  const msgs = ['', 'Routing Descubierto', 'Tipos Dominados', 'Boss Derrotado', 'IP Comprendida', 'Switch Conectado', 'Tabla Aprendida', 'Victoria Final'];
+  text.textContent = msgs[idx] || bonfireNames[idx];
+  notif.classList.add('show');
+  setTimeout(() => notif.classList.remove('show'), 2200);
+}
 
-  document.addEventListener('DOMContentLoaded', observeThemes);
+function navigate(dir) {
+  const fog = document.getElementById('fog-gate');
+  fog.classList.add('active');
+
+  setTimeout(() => {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(total - 1, current + dir));
+    slides[current].classList.add('active');
+    updateHUD(current);
+    if (dir > 0) showBonfireNotif(current);
+    fog.classList.remove('active');
+  }, 280);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    if (current < total - 1) navigate(1);
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    if (current > 0) navigate(-1);
+  }
+});
+
+buildBonfireBar();
+updateHUD(0);
 </script>
 </body>
 </html>
